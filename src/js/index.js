@@ -73,6 +73,9 @@ import * as recipeView from './views/recipeView';
         recipeView.clearRecipe();
         renderLoader(elements.recipe);
 
+        // Highlight selected recipe
+        if (state.recipe) searchView.highlightSelected(id);
+
         // Create new recipe objects
         state.recipe = new Recipe(id);
 
@@ -96,3 +99,19 @@ import * as recipeView from './views/recipeView';
   }
 
   ['hashchange', 'load'].forEach(event => window.addEventListener(event, controlRecipe));
+
+  elements.recipe.addEventListener('click', e => {
+
+    console.log(e.target.matches('.btn-decrease, .btn-decrease *'))
+      if (e.target.matches('.btn-decrease, .btn-decrease *')) {
+        if (state.recipe.servings > 1) {
+            state.recipe.updateServings('dec');
+            recipeView.updateServingsIngredients(state.recipe);
+        }
+      } else if (e.target.matches('.btn-increase, .btn-increase *')) {
+        state.recipe.updateServings('inc');
+        recipeView.updateServingsIngredients(state.recipe);
+      }
+
+      console.log(state.recipe);
+  })
