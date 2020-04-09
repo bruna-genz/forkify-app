@@ -18,8 +18,6 @@ import * as likesView from './views/likesView';
 
     const state = {}
 
-    window.s = state;
-
     /**
      * SEARCH CONTROLLER
      */
@@ -144,10 +142,6 @@ import * as likesView from './views/likesView';
      * LIKES CONTROLLER
      */
 
-    // !TESTING
-    state.likes = new Likes()
-    likesView.toggleLikeMenu(state.likes.getNumLikes);
-
     const controlLikes = () => {
         if (!state.likes) state.likes = new Likes();
         const currentID = state.recipe.id;
@@ -182,6 +176,19 @@ import * as likesView from './views/likesView';
 
         likesView.toggleLikeMenu(state.likes.getNumLikes());
     }
+
+    window.addEventListener('load', () => {
+        state.likes = new Likes()
+
+        // Restore likes
+        state.likes.readStorage();
+
+        // Toggle like menu btn
+        likesView.toggleLikeMenu(state.likes.getNumLikes());
+
+        // Render the existing likes
+        state.likes.likes.forEach(like => likesView.renderLike(like));
+    })
     
     // Handling recipe button clicks
     elements.recipe.addEventListener('click', e => {
