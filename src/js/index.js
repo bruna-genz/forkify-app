@@ -4,70 +4,73 @@ import List from './models/List';
 import { elements, renderLoader, clearLoader } from './views/base';
 import * as searchView from './views/searchView';
 import * as recipeView from './views/recipeView';
+import * as listView from './views/listView';
 
-/**
- * Global state of the app
- * - search object
- * - current recipe object
- * - shopping list object 
- * - liked recipes
- */
 
- const state = {}
+    /**
+     * Global state of the app
+     * - search object
+     * - current recipe object
+     * - shopping list object 
+     * - liked recipes
+     */
 
- /**
-  * SEARCH CONTROLLER
-  */
+    const state = {}
 
- const controlSearch = async () => {
-     // 1) Get query from view
-     const query = searchView.getInput();
+    window.s = state;
 
-     if (query) {
-        // 2) New search object and add to state
-        state.search = new Search(query);
+    /**
+     * SEARCH CONTROLLER
+     */
 
-        // 3) Prepare UI for results
-        searchView.clearInput();
-        searchView.clearResults();
-        renderLoader(elements.searchRes);
+    const controlSearch = async () => {
+        // 1) Get query from view
+        const query = searchView.getInput();
 
-        try {
-        // 4) Search for recipes
-        await state.search.getResults();
+        if (query) {
+            // 2) New search object and add to state
+            state.search = new Search(query);
 
-        // 5) Render results on UI
-        clearLoader();
-        searchView.renderResults(state.search.result)
-        } catch (err) {
-            alert('Something wrong with the search...')
+            // 3) Prepare UI for results
+            searchView.clearInput();
+            searchView.clearResults();
+            renderLoader(elements.searchRes);
+
+            try {
+            // 4) Search for recipes
+            await state.search.getResults();
+
+            // 5) Render results on UI
+            clearLoader();
+            searchView.renderResults(state.search.result)
+            } catch (err) {
+                alert('Something wrong with the search...')
+            }
         }
-     }
- }
+    }
 
- elements.searchForm.addEventListener('click', e => {
-     e.preventDefault();
-     controlSearch();
- })
+    elements.searchForm.addEventListener('click', e => {
+        e.preventDefault();
+        controlSearch();
+    })
 
- elements.searchResPages.addEventListener('click', e => {
-     const btn = e.target.closest('.btn-inline');
+    elements.searchResPages.addEventListener('click', e => {
+        const btn = e.target.closest('.btn-inline');
 
-     if (btn) {
-         const goToPage = parseInt(btn.dataset.goto, 10);
-         searchView.clearResults();
-         searchView.renderResults(state.search.result, goToPage);
-     }
- })
+        if (btn) {
+            const goToPage = parseInt(btn.dataset.goto, 10);
+            searchView.clearResults();
+            searchView.renderResults(state.search.result, goToPage);
+        }
+    })
 
- /**
-  * RECIPE CONTROLLER
-  */
+    /**
+     * RECIPE CONTROLLER
+     */
 
-  const controlRecipe = async () => {
+    const controlRecipe = async () => {
       // Get ID from URL
       const id = window.location.hash.replace('#', '');
-      console.log(id);
 
       if (id) {
         // Prepare UI from changes
@@ -97,28 +100,54 @@ import * as recipeView from './views/recipeView';
             alert('Error processing recipe!')
         }
       }
-  }
+    }
 
-  ['hashchange', 'load'].forEach(event => window.addEventListener(event, controlRecipe));
+    ['hashchange', 'load'].forEach(event => window.addEventListener(event, controlRecipe));
 
-  elements.recipe.addEventListener('click', e => {
 
-    console.log(e.target.matches('.btn-decrease, .btn-decrease *'))
-      if (e.target.matches('.btn-decrease, .btn-decrease *')) {
-        if (state.recipe.servings > 1) {
-            state.recipe.updateServings('dec');
-            recipeView.updateServingsIngredients(state.recipe);
+    /**
+     * RECIPE CONTROLLER
+     */
+
+    const controlList = () => {
+        // Create new list if there isn't one yet
+        if (!state.list) state.list = new List();
+
+        // Add each item to the list and UI
+        state.recipe.ingredients.forEach(el => {
+            const item = state.list.addItem(el.count, el.unit, el.ingredient);
+            listView.renderItem(item);
+        })
+    }
+
+    // Handling delete and update shopping list elements
+    elements.shopping.addEventListener('click', e => {
+        const id = e.target.closest('.shopping__item').dataset.itemid;
+
+        // Handle the delete button
+        if (e.target.matches('.shopping__delete, .shopping__delete *')) {
+            state.list.deleteItem(id);
+            listView.deleteItem(id);
+
+        // Handle the count update
+        } else if (e.target.matches('.shopping__count-value')) {
+            const val = parseFloat(e.target.value, 10);
+            state.list.updateCount(id, val);
         }
-      } else if (e.target.matches('.btn-increase, .btn-increase *')) {
-        state.recipe.updateServings('inc');
-        recipeView.updateServingsIngredients(state.recipe);
-      }
-
-      console.log(state.recipe);
-  })
-
-  /**
-  * RECIPE CONTROLLER
-  */
-
-  window.l = new List();
+    })    
+    
+    
+    // Handling recipe button clicks
+    elements.recipe.addEventListener('click', e => {
+        if (e.target.matches('.btn-decrease, .btn-decrease *')) {
+            if (state.recipe.servings > 1) {
+                state.recipe.updateServings('dec');
+                recipeView.updateServingsIngredients(state.recipe);
+            }
+        } else if (e.target.matches('.btn-increase, .btn-increase *')) {
+            state.recipe.updateServings('inc');
+            recipeView.updateServingsIngredients(state.recipe);
+        } else if (e.target.matches('.recipe__btn--add, .recipe__btn--add *')) {
+            controlList();
+        }
+    })
